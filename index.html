@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<!-- Title shown on browser tab -->
+<title>Morning Light Calendar</title>
+
+<style>
+
+/* Main page styling */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #1a1207;
+  color: #f5e6c8;
+}
+
+/* Centers app and limits width */
+.app {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* Header section */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Main title styling */
+h1 { 
+  color: #e8c97a; 
+}
+
+/* Navigation buttons + month label */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+}
+
+/* Button design */
+button {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid #e8c97a;
+  color: #e8c97a;
+  cursor: pointer;
+}
+
+/* Creates 7-column calendar layout */
+.weekdays, .grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+/* Weekday text style */
+.weekday {
+  text-align: center;
+  font-size: 12px;
+  color: #a8936a;
+}
+
+/* Individual day box */
+.day-cell {
+  background: #241a08;
+  min-height: 80px;
+  padding: 5px;
+  cursor: pointer;
+  border: 1px solid #3a2e18;
+}
+
+/* Highlights today's date */
+.day-cell.today {
+  border: 1px solid #e8c97a;
+}
+
+/* Number inside each day */
+.day-num {
+  font-size: 14px;
+  color: #e8c97a;
+}
+
+/* Small verse preview text */
+.verse-preview {
+  font-size: 10px;
+  margin-top: 5px;
+  color: #c4a05a;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Main app container -->
+<div class="app">
+
+  <!-- Title section -->
+  <div class="header">
+    <h1>Morning Light Calendar</h1>
+  </div>
+
+  <!-- Month navigation -->
+  <div class="nav">
+    <button onclick="prevMonth()">Prev</button>
+
+    <!-- Month + year displayed here -->
+    <div id="navLabel"></div>
+
+    <button onclick="nextMonth()">Next</button>
+  </div>
+
+  <!-- Weekday labels -->
+  <div class="weekdays">
+    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div>
+    <div>Thu</div><div>Fri</div><div>Sat</div>
+  </div>
+
+  <!-- Calendar days generated with JavaScript -->
+  <div class="grid" id="calGrid"></div>
+
+</div>
+
+<script>
+
+// ─────────── DATA ───────────
+
+// Stores all month names
+const MONTHS = [
+"January","February","March","April","May","June",
+"July","August","September","October","November","December"
+];
+
+// Array of Bible verses used in the app
+const verses = [
+{ verse:"The Lord is my shepherd; I shall not want.", ref:"Psalm 23:1" },
+{ verse:"I can do all things through Christ who strengthens me.", ref:"Philippians 4:13" },
+{ verse:"Be strong and courageous. Do not be afraid.", ref:"Joshua 1:9" },
+{ verse:"Cast all your anxiety on Him because He cares for you.", ref:"1 Peter 5:7" },
+{ verse:"The joy of the Lord is your strength.", ref:"Nehemiah 8:10" },
+{ verse:"Trust in the Lord with all your heart.", ref:"Proverbs 3:5" },
+{ verse:"The Lord is my light and my salvation.", ref:"Psalm 27:1" }
+];
+
+// ─────────── STATE ───────────
+
+// Gets the real current date
+const today = new Date();
+
+/* Keeps track of what month/year
+the user is currently viewing */
+let viewMonth = today.getMonth();
+let viewYear = today.getFullYear();
+
+// ─────────── DAILY VERSE ───────────
+
+/* Picks a verse automatically based
+on today's date */
+function getTodayVerse() {
+
+  // Creates a unique number using the date
+  const seed = today.getFullYear()*1000 + 
+               today.getMonth()*100 + 
+               today.getDate();
+
+  // Chooses a verse from the array
+  return verses[seed % verses.length];
+}
+
+// ─────────── CALENDAR ───────────
+
+function renderCalendar() {
+
+  // Updates the month/year label
+  document.getElementById("navLabel").textContent =
+    MONTHS[viewMonth] + " " + viewYear;
+
+  // Gets the calendar grid
+  const grid = document.getElementById("calGrid");
+
+  // Clears old calendar before redrawing
+  grid.innerHTML = "";
+
+  // Finds what weekday the month starts on
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+
+  // Finds number of days in the month
+  const days = new Date(viewYear, viewMonth+1, 0).getDate();
+
+  // Adds empty spaces before day 1
+  for (let i=0;i<firstDay;i++) {
+    grid.appendChild(document.createElement("div"));
+  }
+
+  // Stores today's real date info
+  const todayDate = today.getDate();
+  const todayMonth = today.getMonth();
+  const todayYear = today.getFullYear();
+
+  // Gets today's selected verse
+  const dailyVerse = getTodayVerse();
+
+  // Creates every day box
+  for (let d=1; d<=days; d++) {
+
+    const cell = document.createElement("div");
+
+    // Gives each box the day-cell class
+    cell.className = "day-cell";
+
+    // Checks if this box is today's date
+    const isToday =
+      d===todayDate &&
+      viewMonth===todayMonth &&
+      viewYear===todayYear;
+
+    // Adds highlight effect if it's today
+    if (isToday) {
+      cell.classList.add("today");
+    }
+
+    // Inserts day number + verse preview
+    cell.innerHTML = `
+      <div class="day-num">${d}</div>
+
+      <div class="verse-preview">
+        ${isToday ? dailyVerse.verse : "🔒 Only today unlocks"}
+      </div>
+    `;
+
+    // Makes today's verse clickable
+    if (isToday) {
+
+      // Opens popup with full verse
+      cell.onclick = () => {
+        alert(
+          dailyVerse.verse + "\n\n— " + dailyVerse.ref
+        );
+      };
+    }
+
+    // Adds the cell into the calendar grid
+    grid.appendChild(cell);
+  }
+}
+
+// ─────────── NAVIGATION ───────────
+
+// Goes to next month
+function nextMonth() {
+
+  viewMonth++;
+
+  // Moves to next year after December
+  if (viewMonth>11) {
+    viewMonth=0;
+    viewYear++;
+  }
+
+  renderCalendar();
+}
+
+// Goes to previous month
+function prevMonth() {
+
+  viewMonth--;
+
+  // Moves to previous year before January
+  if (viewMonth<0) {
+    viewMonth=11;
+    viewYear--;
+  }
+
+  renderCalendar();
+}
+
+// ─────────── START ───────────
+
+// Runs calendar immediately when page loads
+renderCalendar();
+
+</script>
+
+</body>
+</html> //html
